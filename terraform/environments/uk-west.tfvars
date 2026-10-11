@@ -209,3 +209,19 @@ aws_platform = {
     }
   }
 }
+
+gcp_platform = {
+  name                         = "model-gateway-gemini"
+  network_name                 = "model-gateway-agent-platform"
+  region                       = "europe-west4"
+  subnet_cidr                  = "10.80.0.0/24"
+  processing_location          = "eu"
+  allowed_processing_locations = ["eu"]
+
+  models = {
+    gemini_flash = {
+      model_id             = "gemini-3.8-flash"
+      processing_locations = ["eu"]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-# Model Gateway Azure deployment
+# Model Gateway infrastructure deployment
 
 This root calls platform-iac network, identity and APIM modules at a full commit SHA.
 It creates a fresh UK West resource group, VNet, dedicated APIM integration
@@ -168,3 +168,32 @@ The client CIDRs derive from the configured APIM subnet; an explicit override is
 available when private transport applies source NAT. Before workload Apply, review
 and apply the bootstrap root's single inline-policy update for owned network
 dependency permissions. The bootstrap state and workload state remain separate.
+
+## Google Agent Platform foundation (AI-34)
+
+The Google module creates the private Gemini Enterprise Agent Platform foundation:
+a custom VPC without default internet routes, an endpoint subnet (`10.80.0.0/24`),
+a regional PSC endpoint, private DNS and inbound DNS forwarding. The initial
+endpoint region is `europe-west4`; Gemini 3.8 Flash processing uses the separate
+EU jurisdictional location `eu` and `aiplatform.eu.rep.googleapis.com`. This
+combination follows the live model residency and private connectivity guidance
+checked on 2026-10-11. The region/location/model remain tfvars inputs.
+
+The Google identity bootstrap enables the APIs, creates independent GitHub
+Plan/Apply identities, and gives the existing shared Azure managed identity a
+dedicated Entra audience and Google inference-only federation trust. Its separate
+remote state prevents workload Apply from administering its own privileges.
+Project IDs, exact OIDC subjects and service account/provider references are
+external parameters or matching GitHub environment secrets, never tfvars.
+
+The existing reusable workflow uses Google's official auth action to pass a
+short-lived OAuth token directly to Terraform/OpenTofu, without a credentials
+file. It still has only Plan and Apply jobs, PR comments, and manually approved
+main-only Apply. The root provider locks include Google for Terraform and
+OpenTofu; generated locks inside shared modules are not committed.
+
+This PR deploys the GCP foundation. APIM token-exchange/renewal policies, private
+cross-cloud transport and routes, Azure DNS forwarding, and the Foundry BYOM
+connection remain gateway integration work. PSC alone does not disable the public
+Google API endpoint, and project IAM does not restrict the runtime account to a
+particular model/location; the reviewed APIM allowlist must enforce those routes.

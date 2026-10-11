@@ -46,3 +46,14 @@ output "aws_private_foundation" {
     model_arns = module.bedrock.inference_resource_arns
   }
 }
+
+output "gcp_private_inference" {
+  description = "Private Agent Platform network and approved backend metadata; transport and APIM routing are separate dependencies."
+  value = {
+    network_id       = module.agent_platform.network_id
+    subnet_id        = module.agent_platform.subnet_id
+    private_endpoint = module.agent_platform.private_endpoint
+    backends         = module.agent_platform.backends
+  }
+  sensitive = true
+}

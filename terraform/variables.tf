@@ -142,3 +142,25 @@ variable "aws_platform" {
     error_message = "Each endpoint subnet must be in a distinct availability zone."
   }
 }
+
+variable "gcp_project_id" {
+  description = "Expected Google project supplied by the GitHub environment secret."
+  type        = string
+  sensitive   = true
+}
+
+variable "gcp_platform" {
+  description = "Private Gemini Enterprise Agent Platform endpoint and reviewed model approvals."
+  type = object({
+    name                         = string
+    network_name                 = string
+    region                       = string
+    subnet_cidr                  = string
+    processing_location          = string
+    allowed_processing_locations = set(string)
+    models = map(object({
+      model_id             = string
+      processing_locations = set(string)
+    }))
+  })
+}
