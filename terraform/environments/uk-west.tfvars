@@ -1,8 +1,8 @@
-resource_group_name = "model-gateway-uks-rg"
-location            = "uksouth"
+resource_group_name = "model-gateway-ukw-rg"
+location            = "ukwest"
 
 network = {
-  name          = "model-gateway-vnet-uks"
+  name          = "model-gateway-vnet-ukw"
   address_space = ["10.60.0.0/16"]
 
   subnets = {

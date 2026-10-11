@@ -1,10 +1,10 @@
-# Azure network deployment (AI-32)
+# Azure network deployment
 
 This root calls the existing platform-iac network module at a full commit SHA.
-It creates a fresh UK South resource group, VNet, dedicated APIM integration
+It creates a fresh UK West resource group, VNet, dedicated APIM integration
 subnet and separate undelegated private-endpoint subnet.
 Resource definitions stay in platform-iac; environment settings are in
-`environments/uk-south.tfvars`. The proposed `10.60.0.0/16` allocation differs
+`environments/uk-west.tfvars`. The proposed `10.60.0.0/16` allocation differs
 from the central VNet's `10.50.0.0/16`; check the complete Azure/AWS/GCP address
 inventory before applying or configuring interconnects.
 
@@ -18,9 +18,7 @@ Standard v2 outbound VNet integration. The private-endpoint subnet is
 `10.60.4.0/24`. [APIM integration requirements](https://learn.microsoft.com/en-us/azure/api-management/integrate-vnet-outbound)
 require the instance and VNet in the same region and subscription and an NSG
 on the integration subnet. NSG provisioning, endpoint/DNS wiring and APIM
-regional availability are addressed in AI-33 before APIM deployment. The ADR
-currently places APIM in UK West; AI-33 must reconcile that placement with this
-UK South VNet before enabling integration. Private DNS zones remain empty
+regional availability are addressed in AI-33 before APIM deployment. APIM and the VNet will both be in UK West. Private DNS zones remain empty
 until endpoint selection. This stage does not provide cross-cloud transport.
 
 ## Identity and state
@@ -42,7 +40,7 @@ terraform -chdir=terraform init \
   -backend-config="storage_account_name=$TF_STATE_STORAGE_ACCOUNT" \
   -backend-config="container_name=$TF_STATE_CONTAINER" \
   -backend-config="key=model-gateway/uk-south.tfstate"
-terraform -chdir=terraform plan -var-file=environments/uk-south.tfvars
+terraform -chdir=terraform plan -var-file=environments/uk-west.tfvars
 ```
 
 These commands assume the external variables are already configured; they
@@ -61,51 +59,22 @@ Build sequentially: network (AI-32), APIM (AI-33), AI providers (AI-34), then
 Envoy chart resources (AI-35). The network module remains available at its
 pinned revision after removal of the unrelated legacy OpenAI/AKS-nodepool modules.
 
-## PR plan comments (AI-37)
+## Pipeline
 
-The single infrastructure caller reuses `ops-shared/.github/workflows/terraform.yml` at an immutable
-revision, selecting OpenTofu 1.12.3, this root and the UK South variables file.
-It updates one redacted bot comment per PR, checks the current head before
-posting, reports failures and deletes saved plans. It creates no plan artifacts
-and enables no apply job. The stable `infrastructure-plan-required` result can
-be required by repository rules.
+The single infrastructure workflow calls ops-shared. PRs run OpenTofu and post
+one plan comment. Main and manual pipelines create a Terraform plan; Apply runs
+only on main, after manual approval in `central-apply`, using that saved plan.
+The main plan artifact expires after one day. Identity and backend values remain
+external GitHub secrets and authentication uses OIDC.
 
-`opentofu.lock.hcl` is the separate preview lock; the shared action copies it to
-the active lock only on the runner. Terraform's checked-in lock is unchanged.
-`backend.hcl` selects this environment's state key. The federation contract in
-`.github/federation.json` contains public GitHub repository identity metadata,
-not cloud credentials; its immutable subject matches this repository's OIDC
-configuration.
+## Move to UK West (AI-42)
 
-The repository has an ungated `central-plan` environment matching platform-iac.
-Before a successful live plan, it also needs
-access to the six organization identity/backend secrets passed by the workflow,
-and matching Azure planning federation. Environments belong to the caller
-repository even when orchestration is shared. Platform-iac automatic enrollment
-adds apply trust; planning trust requires explicit onboarding. Organization
-secret access and Azure trust must be verified by a successful backend-connected
-PR plan. PR events select preview only; main and manual events select deployment or plan-only.
+`environments/uk-west.tfvars` moves the shared resource group and network to
+UK West so Standard v2 APIM can use its dedicated subnet in the same region.
+Terraform replaces the UK South resource group, VNet and subnets; this is not
+an in-place regional move. This PR does not provision APIM.
 
-## Deployment (AI-38)
-
-`.github/workflows/infrastructure.yml` handles PR previews, main deployment and
-manual dispatch through one call to the pinned ops-shared workflow. Main and
-manual runs use
-Terraform 1.12.2 and this environment's backend and tfvars. Changes to Terraform,
-the federation contract or the deployment caller on `main` start a plan and
-request approval when changes exist. Manual **Run workflow** on `main` offers
-`plan-only` (default) or `deploy`.
-
-The `central-apply` environment requires `michaelalinks`, disables administrator
-bypass and permits only the `main` branch. Self-review is allowed for the solo
-owner. After reviewing the plan and commit in the run summary, approve through
-**Review deployments**. The shared workflow verifies those protections, rejects
-superseded commits, replans and requires the full plan fingerprint to match before
-applying the saved plan. Changed plans require a fresh run and approval.
-
-Plans and state are never uploaded as workflow artifacts. Azure authentication
-uses the same organization secret references and OIDC credentials as previews.
-The state key remains `model-gateway/uk-south.tfstate`; apply jobs serialize using
-`model-gateway-uk-south` and the backend lease protects the state. A no-change
-plan skips apply. This change adds deployment capability; it has not applied the
-network resources.
+Keep the historical backend key `model-gateway/uk-south.tfstate` during this move.
+It tracks the deployed resources despite its name. Changing the key would create
+an empty state and leave the old UK South network unmanaged. Review the replacement plan
+before approving Apply; complete this stage before adding APIM in AI-33.
