@@ -17,6 +17,12 @@ network = {
         }
       }
     }
+    foundry = {
+      name                              = "foundry-private-endpoints"
+      address_prefixes                  = ["10.60.5.0/24"]
+      network_security_group_key        = "foundry"
+      private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
+    }
     private_endpoints = {
       name                              = "private-endpoints"
       address_prefixes                  = ["10.60.4.0/24"]
@@ -47,7 +53,48 @@ network = {
           source_address_prefix      = "10.60.0.0/24"
           destination_address_prefix = "AzureActiveDirectory"
         }
+        foundry_https = {
+          priority                   = 120
+          direction                  = "Outbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          destination_port_range     = "443"
+          source_address_prefix      = "10.60.0.0/24"
+          destination_address_prefix = "10.60.5.0/24"
+        }
         deny_other_egress = {
+          priority                   = 4096
+          direction                  = "Outbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "*"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+    foundry = {
+      name = "model-gateway-foundry-nsg-ukw"
+      rules = {
+        apim_https = {
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          destination_port_range     = "443"
+          source_address_prefix      = "10.60.0.0/24"
+          destination_address_prefix = "10.60.5.0/24"
+        }
+        deny_unapproved_clients = {
+          priority                   = 4096
+          direction                  = "Inbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "*"
+          destination_address_prefix = "*"
+        }
+        deny_new_outbound_connections = {
           priority                   = 4096
           direction                  = "Outbound"
           access                     = "Deny"
@@ -83,8 +130,13 @@ network = {
     }
   }
 
-  route_tables      = {}
-  private_dns_zones = { apim = "privatelink.azure-api.net" }
+  route_tables = {}
+  private_dns_zones = {
+    apim              = "privatelink.azure-api.net"
+    foundry_openai    = "privatelink.openai.azure.com"
+    foundry_services  = "privatelink.services.ai.azure.com"
+    foundry_cognitive = "privatelink.cognitiveservices.azure.com"
+  }
   tags = {
     project     = "model-gateway"
     environment = "portfolio"
@@ -104,3 +156,27 @@ apim = {
 
 publisher_name  = "Model Gateway Demo"
 publisher_email = "publisher@example.com"
+
+ai_platform = {
+  name                        = "model-gateway-foundry-uks"
+  location                    = "uksouth"
+  private_endpoint_subnet_key = "foundry"
+  private_dns_zone_keys       = ["foundry_openai", "foundry_services", "foundry_cognitive"]
+  allowed_deployment_skus     = ["Standard"]
+
+  projects = {
+    model-gateway = {
+      display_name = "Model Gateway"
+      description  = "Private regional model inference for Model Gateway."
+    }
+  }
+
+  deployments = {
+    chat = {
+      model_name    = "gpt-4.1-mini"
+      model_version = "2025-04-14"
+      sku_name      = "Standard"
+      capacity      = 10
+    }
+  }
+}

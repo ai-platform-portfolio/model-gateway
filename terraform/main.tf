@@ -41,3 +41,21 @@ module "apim" {
   timeouts                   = var.apim.timeouts
   tags                       = var.network.tags
 }
+
+module "foundry" {
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/azure/foundry?ref=3475847c2399fd1aba3322b9c600fc5f95ae6c29"
+
+  name                       = var.ai_platform.name
+  resource_group_name        = var.resource_group_name
+  location                   = var.ai_platform.location
+  managed_identity_id        = module.identity.workloads["shared"].id
+  inference_principal_id     = module.identity.workloads["shared"].principal_id
+  private_endpoint_location  = var.location
+  private_endpoint_subnet_id = module.network.subnet_ids[var.ai_platform.private_endpoint_subnet_key]
+  private_dns_zone_ids       = [for key in var.ai_platform.private_dns_zone_keys : module.network.private_dns_zone_ids[key]]
+  projects                   = var.ai_platform.projects
+  deployments                = var.ai_platform.deployments
+  allowed_deployment_skus    = var.ai_platform.allowed_deployment_skus
+  timeouts                   = var.ai_platform.timeouts
+  tags                       = var.network.tags
+}
