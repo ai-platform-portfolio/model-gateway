@@ -13,4 +13,4 @@ Deploy into the UK initially. Terraform modules will parameterize regions, netwo
 
 This portfolio intentionally uses the unified model API preview to demonstrate model aliases and supported cross-provider translation. Preview use is not a production recommendation for regulated financial services.
 
-Current state: design documents only. Infrastructure, gateway policies and integration tests have not yet been deployed or run.
+Current state: the [Terraform network root](terraform/README.md) configures a fresh UK South VNet through the pinned platform-iac network module. APIM, AI-provider setups and Envoy chart resources follow sequentially. No infrastructure has been deployed, and gateway integration tests have not yet been run.
