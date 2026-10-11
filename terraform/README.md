@@ -1,6 +1,6 @@
-# Azure network deployment
+# Model Gateway Azure deployment
 
-This root calls the existing platform-iac network module at a full commit SHA.
+This root calls platform-iac network, identity and APIM modules at a full commit SHA.
 It creates a fresh UK West resource group, VNet, dedicated APIM integration
 subnet and separate undelegated private-endpoint subnet.
 Resource definitions stay in platform-iac; environment settings are in
@@ -17,9 +17,18 @@ The APIM subnet is `10.60.0.0/24`, delegated to `Microsoft.Web/serverFarms` for
 Standard v2 outbound VNet integration. The private-endpoint subnet is
 `10.60.4.0/24`. [APIM integration requirements](https://learn.microsoft.com/en-us/azure/api-management/integrate-vnet-outbound)
 require the instance and VNet in the same region and subscription and an NSG
-on the integration subnet. NSG provisioning, endpoint/DNS wiring and APIM
-regional availability are addressed in AI-33 before APIM deployment. APIM and the VNet will both be in UK West. Private DNS zones remain empty
-until endpoint selection. This stage does not provide cross-cloud transport.
+on the integration subnet. The network module owns its NSG and optional routes. The APIM NSG explicitly
+allows Key Vault HTTPS; Azure default outbound rules allow DNS and provider HTTPS.
+No route table is created until a next hop is required. The private DNS zone is
+linked to this VNet; remote clients will need DNS forwarding/linking and network
+connectivity to reach the private endpoint. This does not create cross-cloud transport.
+
+A separate identity module creates the shared environment identity alongside the
+network; APIM receives its ID. Future Azure resources can use the same identity
+and narrowly scoped role assignments. APIM is StandardV2_1 in UK West, with an
+inbound private endpoint and outbound VNet integration. Public access is disabled
+after endpoint creation. Service operation timeouts use module defaults and can
+be overridden through `apim.timeouts`.
 
 ## Identity and state
 
@@ -46,7 +55,7 @@ terraform -chdir=terraform plan -var-file=environments/uk-west.tfvars
 These commands assume the external variables are already configured; they
 contain no credential literals. Authenticate module fetching separately if
 the source repository requires it; never include a token in its source URL.
-Review the live plan before deployment. This change has not applied resources.
+Review the live plan before deployment. The existing network is deployed; this APIM change has not applied resources.
 
 ## Secrets and later stages
 
@@ -78,3 +87,15 @@ Keep the historical backend key `model-gateway/uk-south.tfstate` during this mov
 It tracks the deployed resources despite its name. Changing the key would create
 an empty state and leave the old UK South network unmanaged. Review the replacement plan
 before approving Apply; complete this stage before adding APIM in AI-33.
+
+## APIM publisher inputs (AI-33)
+
+Set the repository secret `TERRAFORM_VARIABLES_JSON` to a JSON object containing
+`publisher_name` and `publisher_email`; supply both outside Git. The reusable
+workflow loads this secret into a restricted workspace variable file in Plan and
+Apply. Both inputs are sensitive. The workflow change is reviewed in ops-shared
+PR #7 and must be merged before this consumer PR.
+
+No publisher details or cloud identity values belong in tfvars. APIM backend
+policies and scoped AI platform access follow in AI-34; this stage creates no
+inference APIs. All three module calls pin the same merged platform-iac revision.

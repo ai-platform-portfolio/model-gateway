@@ -7,3 +7,5 @@ crash.log
 *.local.tfvars.json
 *.local.hcl
 __pycache__/
+
+external.auto.tfvars.json
