@@ -22,7 +22,7 @@ jobs:
 
     with:
       root: terraform
-      vars-file: environments/uk-south.tfvars
+      vars-file: environments/uk-west.tfvars
       preview-lock-file: terraform/opentofu.lock.hcl
 
     secrets: inherit
