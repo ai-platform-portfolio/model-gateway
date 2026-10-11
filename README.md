@@ -1,14 +1,14 @@
 # Model Gateway
 
-Infrastructure for governed model access using Azure API Management, Microsoft Foundry and Amazon Bedrock, with Envoy Gateway on AKS for application ingress. Separate US and UK/EU deployments enforce approved endpoint boundaries. Google Cloud inference is an additional integration for Gemini.
+Infrastructure for governed AI model access in regulated financial services environments.
 
-This repository owns Terraform infrastructure, Kubernetes platform configuration, gateway policies, networking, identity and infrastructure observability. Applications, agents and evaluations belong in a separate repository. No custom FastAPI inference proxy is selected.
+- Microsoft Foundry for GPT; Amazon Bedrock for Claude and approved open models.
+- Azure API Management for inference authentication, routing, consumption limits and audit.
+- Envoy Gateway on AKS for application ingress, in-lieu of Azure Application Gateway to avoid its service charge.
+- Private Azure–AWS connectivity through ExpressRoute/Direct Connect with an IPsec overlay.
 
-The repository currently contains design documents; infrastructure has not been deployed.
+Deploy into the UK initially. Terraform modules will parameterize regions, networking, backend approvals and quotas for additional environments. Applications and evaluations are maintained in a separate repository. Gemini is an additional Google Cloud inference integration.
 
-- [ADR 0001: Foundry, Bedrock, APIM and Envoy infrastructure](docs/adr/0001-model-gateway-architecture.md)
-- [Model availability and hosting evidence](docs/research/model-availability.md)
-- [Azure Front Door incident and recovery implications](docs/research/azure-front-door-outage.md)
-- [Earlier AWS failover exploration, outside the adopted scope](docs/design/aws-failover.md)
+[ADR 0001](docs/adr/0001-model-gateway-architecture.md) contains the architecture, provider evidence, alternatives and cost/token controls. Supporting notes cover the [Azure Front Door incident](docs/research/azure-front-door-outage.md) and [AWS infrastructure recovery scope](docs/design/aws-failover.md).
 
-Model availability, API features and geography require approval per exact endpoint. A private endpoint or catalogue listing does not establish inference residency.
+Current state: design documents only. Infrastructure, gateway policies and integration tests have not yet been deployed or run.
