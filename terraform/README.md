@@ -18,7 +18,9 @@ Standard v2 outbound VNet integration. The private-endpoint subnet is
 `10.60.4.0/24`. [APIM integration requirements](https://learn.microsoft.com/en-us/azure/api-management/integrate-vnet-outbound)
 require the instance and VNet in the same region and subscription and an NSG
 on the integration subnet. The network module owns its NSG and optional routes. The APIM NSG explicitly
-allows Key Vault and Entra HTTPS plus Azure DNS over TCP/UDP 53. An explicit
+allows Key Vault and Entra HTTPS. Azure-provided DNS is platform traffic and
+is not subject to ordinary NSG rules; AzurePlatformDNS supports explicit denial,
+not Allow rules. No platform-DNS deny is configured. An explicit
 priority-4096 deny overrides the broad default VNet/internet outbound allows.
 Backend destinations must be allowed before introducing inference workloads.
 No route table is created until a next hop is required. The private DNS zone is
