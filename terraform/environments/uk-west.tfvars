@@ -47,24 +47,6 @@ network = {
           source_address_prefix      = "10.60.0.0/24"
           destination_address_prefix = "AzureActiveDirectory"
         }
-        azure_dns_udp = {
-          priority                   = 120
-          direction                  = "Outbound"
-          access                     = "Allow"
-          protocol                   = "Udp"
-          destination_port_range     = "53"
-          source_address_prefix      = "10.60.0.0/24"
-          destination_address_prefix = "AzurePlatformDNS"
-        }
-        azure_dns_tcp = {
-          priority                   = 130
-          direction                  = "Outbound"
-          access                     = "Allow"
-          protocol                   = "Tcp"
-          destination_port_range     = "53"
-          source_address_prefix      = "10.60.0.0/24"
-          destination_address_prefix = "AzurePlatformDNS"
-        }
         deny_other_egress = {
           priority                   = 4096
           direction                  = "Outbound"
