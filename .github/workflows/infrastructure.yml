@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   infrastructure:
-    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@56162ae463a862246d5624f0c0521f5d3469566f
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@ac0cb9395b18acdfb412d3e751b69a232733048b
 
     permissions:
       contents: read
@@ -24,5 +24,6 @@ jobs:
       root: terraform
       vars-file: environments/uk-west.tfvars
       preview-lock-file: terraform/opentofu.lock.hcl
+      aws-region: eu-west-2
 
     secrets: inherit
