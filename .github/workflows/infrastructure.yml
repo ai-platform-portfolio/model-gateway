@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   infrastructure:
-    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@fa3c344c811dc878a98d526c71030a4860643ac1
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@11f64d16ebc665116197157ebf8a7e118f5f7a6f
 
     permissions:
       contents: read
