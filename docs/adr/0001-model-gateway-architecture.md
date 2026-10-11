@@ -10,7 +10,7 @@ Design a model-access platform for regulated financial services environments: co
 
 ## Decision
 
-Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and initial open-weight model routes, and Azure API Management (APIM) as the shared application-facing inference gateway. Deploy self-hosted Envoy Gateway on AKS in-lieu of Azure Application Gateway for cost effectiveness: the required TLS termination and HTTP routing functionality is provided by open-source software without a gateway licence or Application Gateway service charge. AKS compute and Azure Load Balancer remain chargeable. [Envoy Gateway](https://github.com/envoyproxy/gateway).
+Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and initial open-weight model routes, Google Vertex AI for Gemini, and Azure API Management (APIM) as the shared application-facing inference gateway. Deploy self-hosted Envoy Gateway on AKS in-lieu of Azure Application Gateway for cost effectiveness: the required TLS termination and HTTP routing functionality is provided by open-source software without a gateway licence or Application Gateway service charge. AKS compute and Azure Load Balancer remain chargeable. [Envoy Gateway](https://github.com/envoyproxy/gateway).
 
 ### Why Foundry and Bedrock
 
@@ -18,7 +18,7 @@ Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and initial open-
 | --- | --- |
 | GPT within the Azure platform | Foundry provides managed GPT deployments, Entra authentication and Private Link. Bedrock's GPT-6.1 Sol currently offers US/global inference, without a UK/EU route; it cannot replace Foundry for this requirement. [AWS GPT model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html). |
 | Claude with UK/EU processing | Foundry Claude documents Global Standard and selected US Data Zone deployments, without an EU Data Zone option. Bedrock Sonnet 5.5 provides `eu.anthropic.claude-sonnet-5-5` from London, routing to the UK and EU member states. This is the concrete reason for adding Bedrock. [Foundry Claude](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-claude), [Bedrock Sonnet profile](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-sonnet-5-5.html). |
-| Gemini with EU processing | Google Cloud provides Gemini inference through EU multi-region endpoints; its residency table lists Gemini 3.8 Flash as supported. Route this external backend through APIM using a Google Cloud project and billing account. [Google model residency](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency), [Google endpoints](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations). |
+| Gemini with EU processing | Select Google Vertex AI as the Gemini backend, using a Google Cloud project, billing account and scoped IAM access. Its residency table lists Gemini 3.8 Flash as supporting EU multi-region processing. Route through APIM and expose approved aliases to Foundry agents through a bring-your-own-model connection; verify the selected model, API and endpoint against the processing boundary before enabling the route. [Google model residency](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency), [Google endpoints](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations). |
 | Cost-effective open-weight inference | Use Bedrock on-demand routes initially, reusing the AWS networking, IAM and monitoring already required for Claude. Qwen3 Next 80B A3B and Qwen3 Coder Next support in-region London inference and are candidates for later application evaluations. Model routes remain configurable; evaluations determine quality and cost per successful task. [Bedrock regional availability](https://docs.aws.amazon.com/bedrock/latest/userguide/models-region-compatibility.html), [pricing](https://aws.amazon.com/bedrock/pricing/). |
 
 Model onboarding uses a versioned backend configuration containing the deployment/profile, API, processing scope and retention approval. Enable only UK/EU-approved inference routes in the UK environment; deny global deployments/profiles through deployment and runtime policies. GPT uses an approved geography-scoped Foundry deployment. EU Data Zone scope follows Microsoft's broader EU Data Boundary and is not the default for the strict UK/EU allowlist. [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types).
@@ -35,6 +35,7 @@ Model-specific retention approvals include Bedrock's Fable review-retention requ
 | Model access | APIM Standard v2 in UK West, inbound Private Link and outbound VNet integration |
 | Azure inference | Foundry in UK South, private endpoint and approved GPT deployment |
 | AWS inference | VPC in `eu-west-2`, Bedrock Runtime and STS interface endpoints, private DNS and endpoint policies |
+| Google inference | Gemini on Vertex AI using an approved UK/EU endpoint, Google IAM and workload identity federation |
 | Cross-cloud transport | ExpressRoute and Direct Connect through a UK cloud exchange, with IPsec overlay |
 | Platform controls | Entra identities/RBAC, AWS IAM, Key Vault, private DNS, regional diagnostics and billing budgets |
 
@@ -48,12 +49,23 @@ flowchart LR
     APIM --> Foundry[Foundry private endpoint]
     APIM --> Link[ExpressRoute / cloud exchange / Direct Connect\nIPsec overlay]
     Link --> Bedrock[London Bedrock private endpoint]
-    APIM -. Gemini integration .-> Google[Google Cloud EU inference]
+    FoundryAgent[Foundry agent: BYOM connection] --> APIM
+    APIM --> Google[Vertex AI Gemini: approved UK/EU endpoint]
 ```
 
 Terraform inputs specify regions, CIDRs, circuit references, endpoint/model approvals, quotas and diagnostics. Separate environment state and backend allowlists support later regional deployments without cross-boundary failover.
 
-Azure applications call APIM for inference while their compute and storage remain in Azure. APIM routes each configured model alias to Foundry, Bedrock or the external Google Cloud backend; Bedrock managed inference requires no application server or GPU deployment in AWS.
+Azure applications call APIM for inference while their compute and storage remain in Azure. APIM routes each configured model alias to Foundry, Bedrock or the Vertex AI Gemini backend; Bedrock managed inference requires no application server or GPU deployment in AWS.
+
+### Gemini backend and Foundry integration
+
+Select Vertex AI for Gemini. Foundry agents use an admin-connected model alias through a bring-your-own-model connection to APIM: **Foundry agent → APIM → Vertex AI**. Applications can also invoke the same approved alias directly through APIM. Gemini inference remains on Google Cloud. The Foundry connection provides agent access to the external backend; it does not create an Azure-hosted Gemini model deployment. [Foundry BYOM connections](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/ai-gateway).
+
+Use the Vertex AI OpenAI-compatible Chat Completions API where the selected model and approved endpoint support it, matching the Foundry connection contract. Keep API format, model identifier, location and endpoint configurable. Validate streaming, supported features and error translation before onboarding. [Vertex AI authentication and endpoint configuration](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/migrate/openai/auth-and-credentials).
+
+The Gemini Developer API used in Microsoft's example is not selected. Microsoft chose it for easy demonstration setup and free-tier access. Vertex AI better fits this platform's Google IAM, federated short-lived credentials and processing-location controls. [Microsoft multi-vendor BYOM sample](https://github.com/microsoft-foundry/foundry-samples/blob/main/infrastructure/infrastructure-setup-terraform/46-bring-your-own-models/README.md).
+
+Vertex AI selection and routing through Foundry do not establish private connectivity or processing residency on their own. Approve the exact Google model and endpoint separately, block global routing and cross-boundary fallback, and verify private access through the chosen cross-cloud transport and Google API networking configuration before enabling workloads. [Google model residency](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency), [Private Service Connect for Gemini over hybrid connectivity](https://codelabs.developers.google.com/cloudnet-psc-hybridGemini).
 
 ### APIM and Envoy responsibilities
 
@@ -86,6 +98,10 @@ APIM uses a user-assigned managed identity and scoped Foundry RBAC. For Bedrock,
 
 This composes documented APIM token acquisition, AWS Entra federation and APIM request-signing mechanisms; it is a policy implementation, not a built-in federation connector. Scope the role to approved model/profile resources and restrict policy editing to the platform deployment identity. [APIM identity policy](https://learn.microsoft.com/en-us/azure/api-management/authentication-managed-identity-policy), [AWS Entra federation](https://aws.amazon.com/blogs/apn/automating-openid-connect-based-aws-iam-web-identity-roles-with-microsoft-entra-id/), [APIM Bedrock signing](https://learn.microsoft.com/en-us/azure/api-management/amazon-bedrock-passthrough-llm-api).
 
+For Vertex AI, retain the shared Azure user-assigned managed identity. Foundry authenticates to APIM with that identity; APIM validates its Entra token. Configure a separate Google workload identity federation trust with issuer, audience and subject restricted to the authorized Azure identity. APIM obtains an Entra token for the Google federation audience, exchanges it through Google STS, and obtains a short-lived Google OAuth access token, using scoped service-account impersonation where required. Grant only the inference permissions needed for the approved backend. Cache tokens only until before expiry and implement renewal in APIM policy fragments. This token exchange requires implementation and end-to-end validation; it is not an automatic Foundry connector capability. [Google federation with Azure workloads](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-other-clouds), [Vertex AI OAuth authentication](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/migrate/openai/auth-and-credentials).
+
+Use GitHub OIDC federation separately for Terraform deployment. Capture Google API enablement, IAM, federation and networking in reusable `platform-iac` modules, consumed by Model Gateway module calls and parameterized inputs. Do not create Google service-account keys or store provider credentials in tfvars, repositories or Terraform state. Pass cloud identifiers through external parameters; any future long-lived secret must be retrieved from the relevant cloud secret manager.
+
 ### Cost, tokens and audit
 
 - Start open-weight models on pay-per-token inference. Keep model identifiers and routes configurable; application evaluations select the best value for each task. Reserved capacity and self-hosted GPU deployments are outside the initial implementation.
@@ -95,7 +111,7 @@ This composes documented APIM token acquisition, AWS Entra federation and APIM r
 
 ## Validation
 
-Validate IaC and gateway policies; test unified API aliases and format translation, private DNS/transport, STS renewal, denied identities/routes, streaming, throttling, token reporting and circuit/tunnel failure using synthetic requests. Confirm billing allocation and content-free audit records. Application behavior and model evaluations are tested in their own repository.
+Validate IaC and gateway policies; test unified API aliases and format translation, private DNS/transport, AWS STS and Google OAuth token renewal, Foundry BYOM Gemini aliases, denied identities/routes, streaming, throttling, token reporting and circuit/tunnel failure using synthetic requests. Confirm billing allocation and content-free audit records. Application behavior and model evaluations are tested in their own repository.
 
 ## Related decisions
 
