@@ -1,0 +1,43 @@
+name: PR infrastructure plan
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: infrastructure-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@e231e2fad78504d141e0e00d6a5a6f480341d2cd
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      operation: preview
+      engine: tofu
+      version: '1.12.3'
+      root: terraform
+      backend-file: backend.hcl
+      vars-file: environments/uk-south.tfvars
+      lock-file: terraform/opentofu.lock.hcl
+      federation-file: .github/federation.json
+      plan-environment: central-plan
+      approver: michaelalinks
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      TF_BACKEND_RESOURCE_GROUP: ${{ secrets.TF_BACKEND_RESOURCE_GROUP }}
+      TF_BACKEND_RESOURCE_NAME: ${{ secrets.TF_BACKEND_RESOURCE_NAME }}
+      TF_BACKEND_CONTAINER: ${{ secrets.TF_BACKEND_CONTAINER }}
+  infrastructure-plan-required:
+    needs: plan
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require a completed successful infrastructure plan
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+        run: test "$PLAN_RESULT" = success

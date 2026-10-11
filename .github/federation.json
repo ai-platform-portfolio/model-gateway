@@ -1,0 +1,12 @@
+{
+  "github_repositories": {
+    "model-gateway": {
+      "owner": "ai-platform-portfolio",
+      "owner_id": "334196300",
+      "name": "model-gateway",
+      "repository_id": "1414206718",
+      "plan_environment": "central-plan",
+      "apply_environment": "central-apply"
+    }
+  }
+}
