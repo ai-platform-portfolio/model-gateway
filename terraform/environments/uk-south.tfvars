@@ -1,13 +1,20 @@
+resource_group_name = "model-gateway-uks-rg"
+location            = "uksouth"
+
 network = {
-  resource_group_name = "model-gateway-network-uks-rg"
-  location            = "uksouth"
-  name                = "model-gateway-vnet-uks"
-  address_space       = ["10.60.0.0/16"]
+  name          = "model-gateway-vnet-uks"
+  address_space = ["10.60.0.0/16"]
 
   subnets = {
-    aks = {
-      name             = "aks"
-      address_prefixes = ["10.60.0.0/22"]
+    apim = {
+      name             = "apim"
+      address_prefixes = ["10.60.0.0/24"]
+      delegations = {
+        apim = {
+          service = "Microsoft.Web/serverFarms"
+          actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+        }
+      }
     }
     private_endpoints = {
       name             = "private-endpoints"

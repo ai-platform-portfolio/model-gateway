@@ -1,16 +1,27 @@
 # Azure network deployment (AI-32)
 
 This root calls the existing platform-iac network module at a full commit SHA.
-It creates a fresh UK South resource group, VNet and two undelegated subnets.
+It creates a fresh UK South resource group, VNet, dedicated APIM integration
+subnet and separate undelegated private-endpoint subnet.
 Resource definitions stay in platform-iac; environment settings are in
 `environments/uk-south.tfvars`. The proposed `10.60.0.0/16` allocation differs
 from the central VNet's `10.50.0.0/16`; check the complete Azure/AWS/GCP address
 inventory before applying or configuring interconnects.
 
-The AKS subnet reserves space for future ingress compute; it creates no cluster.
-Private DNS zones are empty until the APIM and AI stages select their actual
-endpoints. APIM region, integration subnet, NSG, peering and DNS links are part
-of AI-33; this stage does not provide backend access or cross-cloud transport.
+`resource_group_name` and `location` are top-level environment inputs reused by
+subsequent modules. The network module creates the shared resource group; later
+modules must reference it without creating it again, with dependencies on the
+network module where needed.
+
+The APIM subnet is `10.60.0.0/24`, delegated to `Microsoft.Web/serverFarms` for
+Standard v2 outbound VNet integration. The private-endpoint subnet is
+`10.60.4.0/24`. [APIM integration requirements](https://learn.microsoft.com/en-us/azure/api-management/integrate-vnet-outbound)
+require the instance and VNet in the same region and subscription and an NSG
+on the integration subnet. NSG provisioning, endpoint/DNS wiring and APIM
+regional availability are addressed in AI-33 before APIM deployment. The ADR
+currently places APIM in UK West; AI-33 must reconcile that placement with this
+UK South VNet before enabling integration. Private DNS zones remain empty
+until endpoint selection. This stage does not provide cross-cloud transport.
 
 ## Identity and state
 
