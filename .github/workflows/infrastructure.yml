@@ -5,30 +5,15 @@ on:
 
   push:
     branches: [main]
-    paths:
-      - 'terraform/**'
-      - '.github/federation.json'
-      - '.github/workflows/infrastructure.yml'
 
   workflow_dispatch:
-    inputs:
-      operation:
-        description: Plan only, or plan and request deployment approval
-        type: choice
-        options: [plan-only, deploy]
-        default: plan-only
 
 permissions:
   contents: read
 
-concurrency:
-  group: infrastructure-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   infrastructure:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@c5487e1d87b7b16427d11fe8c22112041c882be0
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@fa3c344c811dc878a98d526c71030a4860643ac1
 
     permissions:
       contents: read
@@ -36,23 +21,8 @@ jobs:
       pull-requests: write
 
     with:
-      operation: ${{ github.event_name == 'pull_request' && 'preview' || (github.event_name == 'workflow_dispatch' && inputs.operation || 'deploy') }}
-      engine: ${{ github.event_name == 'pull_request' && 'tofu' || 'terraform' }}
-      version: ${{ github.event_name == 'pull_request' && '1.12.3' || '1.12.2' }}
       root: terraform
-      backend-file: backend.hcl
       vars-file: environments/uk-south.tfvars
-      lock-file: ${{ github.event_name == 'pull_request' && 'terraform/opentofu.lock.hcl' || '' }}
-      federation-file: .github/federation.json
-      plan-environment: central-plan
-      apply-environment: central-apply
-      approver: michaelalinks
-      state-lock: model-gateway-uk-south
+      preview-lock-file: terraform/opentofu.lock.hcl
 
-    secrets:
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      TF_BACKEND_RESOURCE_GROUP: ${{ secrets.TF_BACKEND_RESOURCE_GROUP }}
-      TF_BACKEND_RESOURCE_NAME: ${{ secrets.TF_BACKEND_RESOURCE_NAME }}
-      TF_BACKEND_CONTAINER: ${{ secrets.TF_BACKEND_CONTAINER }}
+    secrets: inherit
