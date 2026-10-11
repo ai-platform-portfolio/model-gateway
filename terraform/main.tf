@@ -1,5 +1,5 @@
 module "network" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/network?ref=873130d883f63bef8eade90b4830b6a95e78dff0"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/network?ref=845a43d5679e91117e6d710d60a3a94d00eda4e1"
 
   resource_group_name     = var.resource_group_name
   location                = var.location
@@ -13,7 +13,7 @@ module "network" {
 }
 
 module "identity" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/identity?ref=873130d883f63bef8eade90b4830b6a95e78dff0"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/identity?ref=845a43d5679e91117e6d710d60a3a94d00eda4e1"
 
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -26,7 +26,7 @@ module "identity" {
 }
 
 module "apim" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/apim?ref=873130d883f63bef8eade90b4830b6a95e78dff0"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/apim?ref=845a43d5679e91117e6d710d60a3a94d00eda4e1"
 
   resource_group_name        = var.resource_group_name
   location                   = var.location

@@ -14,10 +14,11 @@ variable "network" {
     name          = string
     address_space = list(string)
     subnets = map(object({
-      name                       = string
-      address_prefixes           = list(string)
-      network_security_group_key = optional(string)
-      route_table_key            = optional(string)
+      name                              = string
+      address_prefixes                  = list(string)
+      network_security_group_key        = optional(string)
+      route_table_key                   = optional(string)
+      private_endpoint_network_policies = optional(string, "Disabled")
       delegations = optional(map(object({
         service = string
         actions = list(string)

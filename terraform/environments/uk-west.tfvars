@@ -18,8 +18,10 @@ network = {
       }
     }
     private_endpoints = {
-      name             = "private-endpoints"
-      address_prefixes = ["10.60.4.0/24"]
+      name                              = "private-endpoints"
+      address_prefixes                  = ["10.60.4.0/24"]
+      network_security_group_key        = "private_endpoints"
+      private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
     }
   }
 
@@ -33,8 +35,67 @@ network = {
           access                     = "Allow"
           protocol                   = "Tcp"
           destination_port_range     = "443"
-          source_address_prefix      = "VirtualNetwork"
+          source_address_prefix      = "10.60.0.0/24"
           destination_address_prefix = "AzureKeyVault"
+        }
+        entra_https = {
+          priority                   = 110
+          direction                  = "Outbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          destination_port_range     = "443"
+          source_address_prefix      = "10.60.0.0/24"
+          destination_address_prefix = "AzureActiveDirectory"
+        }
+        azure_dns_udp = {
+          priority                   = 120
+          direction                  = "Outbound"
+          access                     = "Allow"
+          protocol                   = "Udp"
+          destination_port_range     = "53"
+          source_address_prefix      = "10.60.0.0/24"
+          destination_address_prefix = "AzurePlatformDNS"
+        }
+        azure_dns_tcp = {
+          priority                   = 130
+          direction                  = "Outbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          destination_port_range     = "53"
+          source_address_prefix      = "10.60.0.0/24"
+          destination_address_prefix = "AzurePlatformDNS"
+        }
+        deny_other_egress = {
+          priority                   = 4096
+          direction                  = "Outbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "*"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+    private_endpoints = {
+      name = "model-gateway-private-endpoints-nsg-ukw"
+      rules = {
+        deny_unapproved_clients = {
+          priority                   = 4096
+          direction                  = "Inbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "*"
+          destination_address_prefix = "*"
+        }
+        deny_new_outbound_connections = {
+          priority                   = 4096
+          direction                  = "Outbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "*"
+          destination_address_prefix = "*"
         }
       }
     }

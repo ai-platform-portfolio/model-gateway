@@ -18,7 +18,9 @@ Standard v2 outbound VNet integration. The private-endpoint subnet is
 `10.60.4.0/24`. [APIM integration requirements](https://learn.microsoft.com/en-us/azure/api-management/integrate-vnet-outbound)
 require the instance and VNet in the same region and subscription and an NSG
 on the integration subnet. The network module owns its NSG and optional routes. The APIM NSG explicitly
-allows Key Vault HTTPS; Azure default outbound rules allow DNS and provider HTTPS.
+allows Key Vault and Entra HTTPS plus Azure DNS over TCP/UDP 53. An explicit
+priority-4096 deny overrides the broad default VNet/internet outbound allows.
+Backend destinations must be allowed before introducing inference workloads.
 No route table is created until a next hop is required. The private DNS zone is
 linked to this VNet; remote clients will need DNS forwarding/linking and network
 connectivity to reach the private endpoint. This does not create cross-cloud transport.
@@ -98,3 +100,24 @@ no additional secret or JSON file is required.
 APIM backend policies and scoped AI platform access follow in AI-34; this stage
 creates no inference APIs. All three module calls pin the same merged
 platform-iac revision.
+
+## Baseline private endpoint security
+
+The private endpoint subnet uses `NetworkSecurityGroupEnabled` and a dedicated
+NSG. It initially denies all client access and new outbound connections; stateful
+responses to subsequently allowed inbound connections do not require a new
+outbound allow. Add higher-priority inbound TCP 443 rules for confirmed Envoy or
+other approved client subnet CIDRs when those clients are introduced. There is
+currently no deployed AKS cluster in the selected subscription, so no client CIDR
+is invented. A closed gateway can be provisioned before workloads are configured.
+
+The live plan must retain the existing UK West network and add the identity,
+NSGs, DNS link, APIM and private endpoint. No classic APIM management bypass
+route or broad AzureCloud/internet allow is added. This baseline creates no
+firewall, peering or external client DNS path. Validate private connectivity from
+an explicitly allowed client when it is configured, and confirm public requests
+are rejected after deployment.
+
+The subnet policy enhancement is platform-iac PR #20; merge it before this
+consumer PR. The shared workflow failure-propagation fix is already merged in
+ops-shared PR #8. Required publisher metadata remains in the environment tfvars.
