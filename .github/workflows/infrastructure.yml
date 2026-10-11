@@ -1,31 +1,47 @@
-name: PR infrastructure plan
+name: Infrastructure
 on:
   pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/federation.json'
+      - '.github/workflows/infrastructure.yml'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Plan only, or plan and request deployment approval
+        type: choice
+        options: [plan-only, deploy]
+        default: plan-only
 permissions:
   contents: read
 concurrency:
-  group: infrastructure-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: infrastructure-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   workflows:
     uses: ai-platform-portfolio/ops-shared/.github/workflows/workflow-lint.yml@e231e2fad78504d141e0e00d6a5a6f480341d2cd
   plan:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@e231e2fad78504d141e0e00d6a5a6f480341d2cd
     permissions:
       contents: read
       id-token: write
       pull-requests: write
     with:
-      operation: preview
-      engine: tofu
-      version: '1.12.3'
+      operation: ${{ github.event_name == 'pull_request' && 'preview' || (github.event_name == 'workflow_dispatch' && inputs.operation || 'deploy') }}
+      engine: ${{ github.event_name == 'pull_request' && 'tofu' || 'terraform' }}
+      version: ${{ github.event_name == 'pull_request' && '1.12.3' || '1.12.2' }}
       root: terraform
       backend-file: backend.hcl
       vars-file: environments/uk-south.tfvars
-      lock-file: terraform/opentofu.lock.hcl
+      lock-file: ${{ github.event_name == 'pull_request' && 'terraform/opentofu.lock.hcl' || '' }}
       federation-file: .github/federation.json
       plan-environment: central-plan
+      apply-environment: central-apply
       approver: michaelalinks
+      state-lock: model-gateway-uk-south
     secrets:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -35,7 +51,7 @@ jobs:
       TF_BACKEND_CONTAINER: ${{ secrets.TF_BACKEND_CONTAINER }}
   infrastructure-plan-required:
     needs: plan
-    if: always()
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

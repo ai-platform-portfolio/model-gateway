@@ -63,7 +63,7 @@ pinned revision after removal of the unrelated legacy OpenAI/AKS-nodepool module
 
 ## PR plan comments (AI-37)
 
-The PR caller reuses `ops-shared/.github/workflows/terraform.yml` at an immutable
+The single infrastructure caller reuses `ops-shared/.github/workflows/terraform.yml` at an immutable
 revision, selecting OpenTofu 1.12.3, this root and the UK South variables file.
 It updates one redacted bot comment per PR, checks the current head before
 posting, reports failures and deletes saved plans. It creates no plan artifacts
@@ -84,11 +84,13 @@ and matching Azure planning federation. Environments belong to the caller
 repository even when orchestration is shared. Platform-iac automatic enrollment
 adds apply trust; planning trust requires explicit onboarding. Organization
 secret access and Azure trust must be verified by a successful backend-connected
-PR plan. The preview caller does not apply resources.
+PR plan. PR events select preview only; main and manual events select deployment or plan-only.
 
 ## Deployment (AI-38)
 
-`.github/workflows/deploy.yml` calls the same pinned ops-shared workflow with
+`.github/workflows/infrastructure.yml` handles PR previews, main deployment and
+manual dispatch through one call to the pinned ops-shared workflow. Main and
+manual runs use
 Terraform 1.12.2 and this environment's backend and tfvars. Changes to Terraform,
 the federation contract or the deployment caller on `main` start a plan and
 request approval when changes exist. Manual **Run workflow** on `main` offers
