@@ -60,3 +60,28 @@ will carry references rather than credential or certificate material.
 Build sequentially: network (AI-32), APIM (AI-33), AI providers (AI-34), then
 Envoy chart resources (AI-35). The network module remains available at its
 pinned revision after removal of the unrelated legacy OpenAI/AKS-nodepool modules.
+
+## PR plan comments (AI-37)
+
+The PR caller reuses `ops-shared/.github/workflows/terraform.yml` at an immutable
+revision, selecting OpenTofu 1.12.3, this root and the UK South variables file.
+It updates one redacted bot comment per PR, checks the current head before
+posting, reports failures and deletes saved plans. It creates no plan artifacts
+and enables no apply job. The stable `infrastructure-plan-required` result can
+be required by repository rules.
+
+`opentofu.lock.hcl` is the separate preview lock; the shared action copies it to
+the active lock only on the runner. Terraform's checked-in lock is unchanged.
+`backend.hcl` selects this environment's state key. The federation contract in
+`.github/federation.json` contains public GitHub repository identity metadata,
+not cloud credentials; its immutable subject matches this repository's OIDC
+configuration.
+
+The repository has an ungated `central-plan` environment matching platform-iac.
+Before a successful live plan, it also needs
+access to the six organization identity/backend secrets passed by the workflow,
+and matching Azure planning federation. Environments belong to the caller
+repository even when orchestration is shared. Platform-iac automatic enrollment
+adds apply trust; planning trust requires explicit onboarding. Organization
+secret access and Azure trust must be verified by a successful backend-connected
+PR plan. No deployment workflow is enabled by this caller.
