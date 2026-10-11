@@ -1,5 +1,5 @@
 module "github_identity" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/aws/github-identity?ref=2b3c0ce3590f62584ce1e284f437191cc06dfe48"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/aws/github-identity?ref=742df5302db2697fbb10efba5247405babcd2bfc"
 
   name_prefix        = var.name_prefix
   region             = var.region

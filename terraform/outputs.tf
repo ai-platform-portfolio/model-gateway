@@ -35,3 +35,14 @@ output "foundry" {
     projects            = module.foundry.projects
   }
 }
+output "aws_private_foundation" {
+  description = "Foundation references for later private transport and APIM federation; not yet an operational inference route."
+  sensitive   = true
+  value = {
+    vpc_id     = module.aws_network.vpc_id
+    subnet_ids = module.aws_network.subnet_ids
+    profiles   = module.bedrock.profiles
+    endpoints  = module.bedrock.endpoints
+    model_arns = module.bedrock.inference_resource_arns
+  }
+}

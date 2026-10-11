@@ -180,3 +180,32 @@ ai_platform = {
     }
   }
 }
+aws_platform = {
+  name          = "model-gateway-bedrock"
+  region        = "eu-west-2"
+  network_name  = "model-gateway-vpc-london"
+  address_space = "10.70.0.0/16"
+
+  subnets = {
+    endpoints_a = { address_prefix = "10.70.0.0/24", availability_zone = "eu-west-2a" }
+    endpoints_b = { address_prefix = "10.70.1.0/24", availability_zone = "eu-west-2b" }
+  }
+  endpoint_subnet_keys = ["endpoints_a", "endpoints_b"]
+
+  processing_regions = [
+    "eu-central-1",
+    "eu-north-1",
+    "eu-south-1",
+    "eu-south-2",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+  ]
+
+  profiles = {
+    claude_sonnet = {
+      source_profile_id = "eu.anthropic.claude-sonnet-5-5"
+      description       = "Model Gateway Claude inference within the reviewed UK/EU processing boundary."
+    }
+  }
+}

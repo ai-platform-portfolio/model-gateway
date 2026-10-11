@@ -112,3 +112,33 @@ variable "ai_platform" {
     }), {})
   })
 }
+variable "aws_account_id" {
+  description = "Expected AWS account supplied by the workflow environment secret."
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_platform" {
+  description = "Private AWS networking and approved Bedrock profile configuration."
+  type = object({
+    name          = string
+    region        = string
+    network_name  = string
+    address_space = string
+    subnets = map(object({
+      address_prefix    = string
+      availability_zone = string
+    }))
+    endpoint_subnet_keys = set(string)
+    allowed_client_cidrs = optional(set(string))
+    processing_regions   = set(string)
+    profiles = map(object({
+      source_profile_id = string
+      description       = optional(string)
+    }))
+  })
+  validation {
+    condition     = length(distinct([for key in var.aws_platform.endpoint_subnet_keys : var.aws_platform.subnets[key].availability_zone])) == length(var.aws_platform.endpoint_subnet_keys)
+    error_message = "Each endpoint subnet must be in a distinct availability zone."
+  }
+}

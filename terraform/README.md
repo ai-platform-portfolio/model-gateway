@@ -143,3 +143,28 @@ policies, AWS/GCP federation and cross-cloud transport remain subsequent AI-34
 work. Private inference and DNS need runtime validation from a connected client;
 GitHub-hosted runners cannot reach these private endpoints. Terraform planning
 uses Azure's control plane and does not require model API keys.
+## AWS Bedrock foundation (AI-34)
+
+The AWS network and Bedrock modules use the same existing workload pipeline and
+Azure backend state. `AWS_ACCOUNT_ID` comes from the GitHub environment, with
+separate OIDC Plan/Apply roles. No access keys, profile ARN/account IDs or JSON
+variable files are committed.
+
+The London VPC uses `10.70.0.0/16`, separate from the Azure networks, with private
+endpoint subnets in two availability zones. Bedrock Runtime and regional STS
+interface endpoints accept HTTPS only from the APIM subnet. Both endpoint policies
+explicitly deny all access until the separately provisioned runtime federation role
+is wired in. The Claude application inference profile copies the reviewed EU
+system profile, with every live target model region checked against the tfvars
+processing allowlist.
+
+This provisions the private AWS foundation only. Private circuits/IPsec, routing,
+DNS forwarding, Entra federation, APIM signing/renewal and model agreement/inference
+entitlement checks remain necessary before runtime use. No public fallback is
+created. Interface endpoints incur charges when deployed; no model capacity is
+reserved and this configuration does not send inference requests.
+
+The client CIDRs derive from the configured APIM subnet; an explicit override is
+available when private transport applies source NAT. Before workload Apply, review
+and apply the bootstrap root's single inline-policy update for owned network
+dependency permissions. The bootstrap state and workload state remain separate.
