@@ -7,6 +7,8 @@ concurrency:
   group: infrastructure-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
+  workflows:
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/workflow-lint.yml@e231e2fad78504d141e0e00d6a5a6f480341d2cd
   plan:
     uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@e231e2fad78504d141e0e00d6a5a6f480341d2cd
     permissions:

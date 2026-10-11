@@ -84,4 +84,26 @@ and matching Azure planning federation. Environments belong to the caller
 repository even when orchestration is shared. Platform-iac automatic enrollment
 adds apply trust; planning trust requires explicit onboarding. Organization
 secret access and Azure trust must be verified by a successful backend-connected
-PR plan. No deployment workflow is enabled by this caller.
+PR plan. The preview caller does not apply resources.
+
+## Deployment (AI-38)
+
+`.github/workflows/deploy.yml` calls the same pinned ops-shared workflow with
+Terraform 1.12.2 and this environment's backend and tfvars. Changes to Terraform,
+the federation contract or the deployment caller on `main` start a plan and
+request approval when changes exist. Manual **Run workflow** on `main` offers
+`plan-only` (default) or `deploy`.
+
+The `central-apply` environment requires `michaelalinks`, disables administrator
+bypass and permits only the `main` branch. Self-review is allowed for the solo
+owner. After reviewing the plan and commit in the run summary, approve through
+**Review deployments**. The shared workflow verifies those protections, rejects
+superseded commits, replans and requires the full plan fingerprint to match before
+applying the saved plan. Changed plans require a fresh run and approval.
+
+Plans and state are never uploaded as workflow artifacts. Azure authentication
+uses the same organization secret references and OIDC credentials as previews.
+The state key remains `model-gateway/uk-south.tfstate`; apply jobs serialize using
+`model-gateway-uk-south` and the backend lease protects the state. A no-change
+plan skips apply. This change adds deployment capability; it has not applied the
+network resources.
