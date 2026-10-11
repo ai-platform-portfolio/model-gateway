@@ -28,7 +28,7 @@ concurrency:
 jobs:
   infrastructure:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@6d07576502ab6c6f2aed196940d02b8e726abad8
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@be2de358ffcd5675405f821400114c3b2b66af7e
 
     permissions:
       contents: read
