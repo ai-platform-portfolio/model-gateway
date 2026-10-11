@@ -29,3 +29,8 @@ dedicated Entra audience token, exchange with Google STS, impersonate the scoped
 inference account, and renew OAuth tokens before expiry. Private cross-cloud
 transport, DNS forwarding, APIM model routing and Foundry BYOM connections must be
 completed before application workloads can use Gemini through the gateway.
+
+Bootstrap applied on 2026-10-11: 33 resources created and the follow-up plan
+reported no changes. The matching GitHub environments contain only external
+project/provider/service-account references. Future identity changes use this
+same Terraform root and administrator-controlled remote state.
