@@ -28,7 +28,7 @@ concurrency:
 jobs:
   infrastructure:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@be2de358ffcd5675405f821400114c3b2b66af7e
+    uses: ai-platform-portfolio/ops-shared/.github/workflows/terraform.yml@c5487e1d87b7b16427d11fe8c22112041c882be0
 
     permissions:
       contents: read
@@ -37,12 +37,12 @@ jobs:
 
     with:
       operation: ${{ github.event_name == 'pull_request' && 'preview' || (github.event_name == 'workflow_dispatch' && inputs.operation || 'deploy') }}
-      engine: terraform
-      version: '1.12.2'
+      engine: ${{ github.event_name == 'pull_request' && 'tofu' || 'terraform' }}
+      version: ${{ github.event_name == 'pull_request' && '1.12.3' || '1.12.2' }}
       root: terraform
       backend-file: backend.hcl
       vars-file: environments/uk-south.tfvars
-      lock-file: ''
+      lock-file: ${{ github.event_name == 'pull_request' && 'terraform/opentofu.lock.hcl' || '' }}
       federation-file: .github/federation.json
       plan-environment: central-plan
       apply-environment: central-apply
