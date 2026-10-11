@@ -24,3 +24,9 @@ policies will narrow that further to the chosen model profiles and private endpo
 
 Private AWS endpoints alone do not connect Azure to AWS. Transport, private DNS and
 runtime federation must be completed before APIM can invoke Bedrock privately.
+
+Bootstrap applied on 2026-10-11: six IAM resources created and the follow-up plan
+reported no changes. Account and environment-specific role references are stored
+as GitHub environment secrets. Future bootstrap changes use this same Terraform
+root and remote state with an administrator session; workload roles cannot modify
+their own deployment permissions.

@@ -24,5 +24,6 @@ jobs:
       root: terraform
       vars-file: environments/uk-west.tfvars
       preview-lock-file: terraform/opentofu.lock.hcl
+      aws-region: eu-west-2
 
     secrets: inherit
