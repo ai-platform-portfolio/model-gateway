@@ -43,7 +43,7 @@ module "apim" {
 }
 
 module "foundry" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/azure/foundry?ref=3475847c2399fd1aba3322b9c600fc5f95ae6c29"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/azure/foundry?ref=5f2e1400f981818d45a423f26a9fcfab772df62a"
 
   name                       = var.ai_platform.name
   resource_group_name        = var.resource_group_name
