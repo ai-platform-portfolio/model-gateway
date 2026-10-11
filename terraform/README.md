@@ -90,12 +90,11 @@ before approving Apply; complete this stage before adding APIM in AI-33.
 
 ## APIM publisher inputs (AI-33)
 
-Set the repository secret `TERRAFORM_VARIABLES_JSON` to a JSON object containing
-`publisher_name` and `publisher_email`; supply both outside Git. The reusable
-workflow loads this secret into a restricted workspace variable file in Plan and
-Apply. Both inputs are sensitive. The workflow change is reviewed in ops-shared
-PR #7 and must be merged before this consumer PR.
+Configure `publisher_name` and `publisher_email` in `environments/uk-west.tfvars`.
+These are publisher contact metadata. Credentials and cloud identity values
+remain external. The existing reusable workflow reads the environment tfvars;
+no additional secret or JSON file is required.
 
-No publisher details or cloud identity values belong in tfvars. APIM backend
-policies and scoped AI platform access follow in AI-34; this stage creates no
-inference APIs. All three module calls pin the same merged platform-iac revision.
+APIM backend policies and scoped AI platform access follow in AI-34; this stage
+creates no inference APIs. All three module calls pin the same merged
+platform-iac revision.

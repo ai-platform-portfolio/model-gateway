@@ -72,13 +72,13 @@ variable "apim" {
 }
 
 variable "publisher_name" {
-  description = "APIM publisher name supplied externally through TERRAFORM_VARIABLES_JSON."
+  description = "APIM publisher name configured in the environment tfvars."
   type        = string
   sensitive   = true
 }
 
 variable "publisher_email" {
-  description = "APIM contact email supplied externally through TERRAFORM_VARIABLES_JSON."
+  description = "APIM publisher contact email configured in the environment tfvars."
   type        = string
   sensitive   = true
 }
