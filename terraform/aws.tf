@@ -8,7 +8,7 @@ module "aws_network" {
 }
 
 module "bedrock" {
-  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/aws/bedrock?ref=742df5302db2697fbb10efba5247405babcd2bfc"
+  source = "git::https://github.com/ai-platform-portfolio/platform-iac.git//terraform/modules/aws/bedrock?ref=40bd4384fb4ef457f087e8f39189e96f42096197"
 
   name                 = var.aws_platform.name
   region               = var.aws_platform.region

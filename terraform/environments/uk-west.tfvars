@@ -205,7 +205,7 @@ aws_platform = {
   profiles = {
     claude_sonnet = {
       source_profile_id = "eu.anthropic.claude-sonnet-5-5"
-      description       = "Model Gateway Claude inference within the reviewed UK/EU processing boundary."
+      description       = "Model Gateway Claude inference within the reviewed UK and EU processing boundary."
     }
   }
 }
