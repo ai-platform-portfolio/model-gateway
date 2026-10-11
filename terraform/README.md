@@ -120,4 +120,5 @@ are rejected after deployment.
 
 The subnet policy enhancement is platform-iac PR #20; merge it before this
 consumer PR. The shared workflow failure-propagation fix is already merged in
-ops-shared PR #8. Required publisher metadata remains in the environment tfvars.
+ops-shared PR #8. Dummy publisher metadata is configured in the environment tfvars as authorised
+for this demo. Replace it with a monitored contact before production use.

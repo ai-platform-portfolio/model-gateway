@@ -119,3 +119,6 @@ apim = {
   private_endpoint_subnet_key = "private_endpoints"
   private_dns_zone_key        = "apim"
 }
+
+publisher_name  = "Model Gateway Demo"
+publisher_email = "publisher@example.com"
