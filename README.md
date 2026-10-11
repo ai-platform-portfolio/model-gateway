@@ -13,4 +13,9 @@ Deploy into the UK initially. Terraform modules will parameterize regions, netwo
 
 This portfolio intentionally uses the unified model API preview to demonstrate model aliases and supported cross-provider translation. Preview use is not a production recommendation for regulated financial services.
 
-Current state: the [Terraform network root](terraform/README.md) configures a fresh UK South VNet through the pinned platform-iac network module. APIM, AI-provider setups and Envoy chart resources follow sequentially. No infrastructure has been deployed, and gateway integration tests have not yet been run.
+Current state: the UK West network, shared managed identity and private Standard v2
+APIM are deployed. The Azure Foundry PR adds UK South inference, with its private
+endpoint in the UK West VNet and TCP 443 access restricted to APIM's integration
+subnet. Model deployments and processing scope are environment settings. AWS/GCP
+backend wiring and Envoy chart resources follow sequentially; gateway runtime
+integration tests have not yet been run.

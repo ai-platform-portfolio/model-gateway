@@ -83,3 +83,32 @@ variable "publisher_email" {
   type        = string
   sensitive   = true
 }
+
+variable "ai_platform" {
+  description = "Private Azure Foundry settings and approved regional model deployments."
+  type = object({
+    name                        = string
+    location                    = string
+    private_endpoint_subnet_key = string
+    private_dns_zone_keys       = list(string)
+    allowed_deployment_skus     = set(string)
+    projects = optional(map(object({
+      display_name = optional(string)
+      description  = optional(string)
+    })), {})
+    deployments = map(object({
+      format                 = optional(string, "OpenAI")
+      model_name             = string
+      model_version          = string
+      sku_name               = optional(string, "Standard")
+      capacity               = number
+      version_upgrade_option = optional(string, "NoAutoUpgrade")
+      rai_policy_name        = optional(string, "Microsoft.DefaultV2")
+    }))
+    timeouts = optional(object({
+      create = optional(string, "1h")
+      update = optional(string, "1h")
+      delete = optional(string, "1h")
+    }), {})
+  })
+}

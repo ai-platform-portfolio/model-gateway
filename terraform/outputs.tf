@@ -23,3 +23,15 @@ output "apim" {
     private_endpoint_id = module.apim.private_endpoint_id
   }
 }
+
+output "foundry" {
+  description = "Private Foundry references for subsequent gateway API routing."
+  sensitive   = true
+  value = {
+    id                  = module.foundry.id
+    openai_endpoint     = module.foundry.openai_endpoint
+    private_endpoint_id = module.foundry.private_endpoint_id
+    deployments         = module.foundry.deployments
+    projects            = module.foundry.projects
+  }
+}

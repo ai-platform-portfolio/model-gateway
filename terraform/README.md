@@ -124,3 +124,22 @@ The subnet policy enhancement is platform-iac PR #20; merge it before this
 consumer PR. The shared workflow failure-propagation fix is already merged in
 ops-shared PR #8. Dummy publisher metadata is configured in the environment tfvars as authorised
 for this demo. Replace it with a monitored contact before production use.
+
+## Azure AI platform (AI-34, first cloud)
+
+The Foundry module creates a private AIServices account and project in UK South,
+reusing the environment managed identity. Its endpoint lives in a dedicated UK
+West subnet (`10.60.5.0/24`) with only APIM-to-Foundry TCP 443 permitted. The network
+module creates and links all three Foundry private DNS zones.
+
+The environment selects a pinned `gpt-4.1-mini` regional `Standard` deployment
+with capacity 10. Live UK South availability and unused quota were checked on
+2026-10-11. The model map remains replaceable; no global or data-zone processing
+is approved by this environment. Account keys and public access are disabled;
+APIM's shared identity receives account-scoped inference access.
+
+Apply provisions inference infrastructure. APIM backend APIs and managed-identity
+policies, AWS/GCP federation and cross-cloud transport remain subsequent AI-34
+work. Private inference and DNS need runtime validation from a connected client;
+GitHub-hosted runners cannot reach these private endpoints. Terraform planning
+uses Azure's control plane and does not require model API keys.
