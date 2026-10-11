@@ -10,7 +10,7 @@ Design a model-access platform for regulated financial services environments: co
 
 ## Decision
 
-Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and approved open models, and Azure API Management (APIM) for inference access and governance. Deploy self-hosted Envoy Gateway on AKS in-lieu of Azure Application Gateway for cost effectiveness: the required TLS termination and HTTP routing functionality is provided by open-source software without a gateway licence or Application Gateway service charge. AKS compute and Azure Load Balancer remain chargeable. [Envoy Gateway](https://github.com/envoyproxy/gateway).
+Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and initial open-weight model routes, and Azure API Management (APIM) as the shared application-facing inference gateway. Deploy self-hosted Envoy Gateway on AKS in-lieu of Azure Application Gateway for cost effectiveness: the required TLS termination and HTTP routing functionality is provided by open-source software without a gateway licence or Application Gateway service charge. AKS compute and Azure Load Balancer remain chargeable. [Envoy Gateway](https://github.com/envoyproxy/gateway).
 
 ### Why Foundry and Bedrock
 
@@ -19,7 +19,7 @@ Implement Microsoft Foundry for GPT, Amazon Bedrock for Claude and approved open
 | GPT within the Azure platform | Foundry provides managed GPT deployments, Entra authentication and Private Link. Bedrock's GPT-6.1 Sol currently offers US/global inference, without a UK/EU route; it cannot replace Foundry for this requirement. [AWS GPT model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html). |
 | Claude with UK/EU processing | Foundry Claude documents Global Standard and selected US Data Zone deployments, without an EU Data Zone option. Bedrock Sonnet 5.5 provides `eu.anthropic.claude-sonnet-5-5` from London, routing to the UK and EU member states. This is the concrete reason for adding Bedrock. [Foundry Claude](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-claude), [Bedrock Sonnet profile](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-sonnet-5-5.html). |
 | Gemini with EU processing | Google Cloud provides Gemini inference through EU multi-region endpoints; its residency table lists Gemini 3.8 Flash as supported. Route this external backend through APIM using a Google Cloud project and billing account. [Google model residency](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/data-residency), [Google endpoints](https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations). |
-| Open models and independent provider capacity | Register approved Bedrock open-model endpoints alongside Claude through the same AWS networking and IAM infrastructure. |
+| Cost-effective open-weight inference | Use Bedrock on-demand routes initially, reusing the AWS networking, IAM and monitoring already required for Claude. Qwen3 Next 80B A3B and Qwen3 Coder Next support in-region London inference and are candidates for later application evaluations. Model routes remain configurable; evaluations determine quality and cost per successful task. [Bedrock regional availability](https://docs.aws.amazon.com/bedrock/latest/userguide/models-region-compatibility.html), [pricing](https://aws.amazon.com/bedrock/pricing/). |
 
 Model onboarding uses a versioned backend configuration containing the deployment/profile, API, processing scope and retention approval. Enable only UK/EU-approved inference routes in the UK environment; deny global deployments/profiles through deployment and runtime policies. GPT uses an approved geography-scoped Foundry deployment. EU Data Zone scope follows Microsoft's broader EU Data Boundary and is not the default for the strict UK/EU allowlist. [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types).
 
@@ -52,6 +52,8 @@ flowchart LR
 ```
 
 Terraform inputs specify regions, CIDRs, circuit references, endpoint/model approvals, quotas and diagnostics. Separate environment state and backend allowlists support later regional deployments without cross-boundary failover.
+
+Azure applications call APIM for inference while their compute and storage remain in Azure. APIM routes each configured model alias to Foundry, Bedrock or the external Google Cloud backend; Bedrock managed inference requires no application server or GPU deployment in AWS.
 
 ### APIM and Envoy responsibilities
 
@@ -86,6 +88,7 @@ This composes documented APIM token acquisition, AWS Entra federation and APIM r
 
 ### Cost, tokens and audit
 
+- Start open-weight models on pay-per-token inference. Keep model identifiers and routes configurable; application evaluations select the best value for each task. Reserved capacity and self-hosted GPU deployments are outside the initial implementation.
 - Apply per-tenant/workload request limits, output-token caps and daily/monthly token allowances. Use `llm-token-limit` on supported API schemas; native Bedrock routes use request/output caps and provider quotas, with usage reporting from their native responses. Streaming estimates and concurrent overshoot preclude treating APIM quotas as an exact global spend ledger. [Token policy](https://learn.microsoft.com/en-us/azure/api-management/llm-token-limit-policy).
 - Emit model, provider, workload, latency, errors and token usage to regional monitoring. Disable prompt/response logging and shared content caching. Use token metrics where the schema supports them. [Token metrics](https://learn.microsoft.com/en-us/azure/api-management/llm-emit-token-metric-policy).
 - Tag resources and reconcile estimated inference spend with Azure/AWS billing exports. Configure monthly budgets, forecast notifications and anomaly alerts. Report platform spend separately: APIM, AKS/Load Balancer, exchange/circuits, IPsec appliances, endpoints, transfer and telemetry. Budgets notify; gateway quotas enforce consumption limits.

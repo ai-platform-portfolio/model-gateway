@@ -2,12 +2,12 @@
 
 Infrastructure for governed AI model access in regulated financial services environments.
 
-- Microsoft Foundry for GPT; Amazon Bedrock for Claude and approved open models.
-- Azure API Management for inference authentication, routing, consumption limits and audit, including the unified model API preview.
+- Microsoft Foundry for GPT; Amazon Bedrock for Claude and initial open-weight model routes, using pay-per-token inference.
+- Azure API Management as the shared application-facing inference gateway for authentication, routing, consumption limits and audit, including the unified model API preview.
 - Envoy Gateway on AKS for application ingress, in-lieu of Azure Application Gateway to avoid its service charge.
 - Private Azure–AWS connectivity through ExpressRoute/Direct Connect with an IPsec overlay.
 
-Deploy into the UK initially. Terraform modules will parameterize regions, networking, backend approvals and quotas for additional environments. Applications and evaluations are maintained in a separate repository. Gemini is an additional Google Cloud inference integration.
+Deploy into the UK initially. Terraform modules will parameterize regions, networking, backend approvals and quotas for additional environments. Applications and evaluations are maintained in a separate repository. Azure applications call APIM, which routes to the configured model backend; application compute and storage remain in Azure. Gemini is a Google Cloud-hosted backend accessed through the same APIM gateway.
 
 [ADR 0001](docs/adr/0001-model-gateway-architecture.md) contains the architecture, provider evidence, alternatives and cost/token controls. Supporting notes cover the [Azure Front Door incident](docs/research/azure-front-door-outage.md) and [AWS infrastructure recovery scope](docs/design/aws-failover.md).
 
